@@ -121,7 +121,7 @@ After running the frontend, scan the QR code with the Expo Go app on your mobile
 
 &nbsp;
 
-## 🚧 Future Enhancements
+## 🚧 Future Enhancements/Features
 
 - **Advanced Route Planning**: Terrain and elevation profiling for path optimization
 - **Offline Mode**: Core functionality without internet connection
