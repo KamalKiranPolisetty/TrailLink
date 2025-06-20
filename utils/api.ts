@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { API_CONFIG } from '@/constants/Config';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
 class ApiClient {
   private client: AxiosInstance;
@@ -21,9 +22,12 @@ class ApiClient {
     this.client.interceptors.request.use(
       async (config) => {
         try {
-          const token = await SecureStore.getItemAsync('userToken');
-          if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+          // Only use SecureStore on native platforms
+          if (Platform.OS !== 'web') {
+            const token = await SecureStore.getItemAsync('userToken');
+            if (token) {
+              config.headers.Authorization = `Bearer ${token}`;
+            }
           }
         } catch (error) {
           console.warn('Failed to get auth token:', error);
@@ -50,7 +54,9 @@ class ApiClient {
 
   private async handleUnauthorized() {
     try {
-      await SecureStore.deleteItemAsync('userToken');
+      if (Platform.OS !== 'web') {
+        await SecureStore.deleteItemAsync('userToken');
+      }
       // You might want to redirect to login screen here
       // This would require navigation context
     } catch (error) {

@@ -1,10 +1,34 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Dimensions, Animated, Share, SafeAreaView, StatusBar, Platform, Alert } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
+
+// Platform-specific map import
+let MapView, Marker;
+if (Platform.OS !== 'web') {
+  const Maps = require('react-native-maps');
+  MapView = Maps.default;
+  Marker = Maps.Marker;
+} else {
+  // Web fallback
+  MapView = ({ children, style, ...props }) => (
+    <View style={[{
+      backgroundColor: '#f0f0f0',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 8,
+    }, style]}>
+      <Text style={{ color: '#666', fontSize: 16 }}>Interactive Map</Text>
+      <Text style={{ color: '#999', fontSize: 12, marginTop: 4 }}>
+        Available on mobile devices
+      </Text>
+      {children}
+    </View>
+  );
+  Marker = ({ children, ...props }) => <View {...props}>{children}</View>;
+}
 
 const NavigateScreen = () => {
   const [userLocation, setUserLocation] = useState(null);
@@ -34,6 +58,18 @@ const NavigateScreen = () => {
   const PANEL_EXPANDED_HEIGHT = height * 0.35;
 
   useEffect(() => {
+    if (Platform.OS === 'web') {
+      // Web fallback - set mock location
+      setUserLocation({ latitude: 37.7749, longitude: -122.4194 });
+      setRegion({
+        latitude: 37.7749,
+        longitude: -122.4194,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      });
+      return;
+    }
+
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -84,12 +120,17 @@ const NavigateScreen = () => {
           }
         }
       }, 1000);
-      startTracking();
+      
+      if (Platform.OS !== 'web') {
+        startTracking();
+      }
     } else {
       if (trackingInterval.current) {
         clearInterval(trackingInterval.current);
       }
-      stopTracking();
+      if (Platform.OS !== 'web') {
+        stopTracking();
+      }
       setIsMoving(false);
       if (lastActiveTime.current) {
         const activeTimePeriod = (Date.now() - lastActiveTime.current) / 1000;
@@ -141,6 +182,8 @@ const NavigateScreen = () => {
   }, [elapsedTime, isMoving, tracking, speed]);
 
   const startTracking = async () => {
+    if (Platform.OS === 'web') return;
+    
     try {
       locationSubscription.current = await Location.watchPositionAsync(
         { 
@@ -208,27 +251,25 @@ const NavigateScreen = () => {
     } 
   };
 
-
   useEffect(() => {
-    // This will now also depend on `distance` and total moving time to trigger updates
     const intervalId = setInterval(() => {
         if (isMoving) {
             const now = Date.now();
-            const deltaTime = (now - lastActiveTime.current) / 1000; // time since last active in seconds
+            const deltaTime = (now - lastActiveTime.current) / 1000;
             totalMovingTime.current += deltaTime;
             lastActiveTime.current = now;
             updateAverageSpeed();
         }
-    }, 1000); // Update every second
+    }, 1000);
 
     return () => clearInterval(intervalId);
-}, [distance, isMoving]);
+  }, [distance, isMoving]);
 
-useEffect(() => {
-    if (!isMoving) {
-        updateAverageSpeed(); // Also update when movement stops
-    }
-}, [isMoving]);
+  useEffect(() => {
+      if (!isMoving) {
+          updateAverageSpeed();
+      }
+  }, [isMoving]);
 
   const stopTracking = () => {
     if (locationSubscription.current) {
@@ -348,12 +389,12 @@ useEffect(() => {
         style={styles.map}
         region={region}
         onRegionChangeComplete={region => setRegion(region)}
-        showsUserLocation={true}
-        showsTraffic={true}
-        showsPointsOfInterest={true}
-        showsMyLocationButton={true}
-        showsCompass={true}
-        showsScale={true}
+        showsUserLocation={Platform.OS !== 'web'}
+        showsTraffic={Platform.OS !== 'web'}
+        showsPointsOfInterest={Platform.OS !== 'web'}
+        showsMyLocationButton={Platform.OS !== 'web'}
+        showsCompass={Platform.OS !== 'web'}
+        showsScale={Platform.OS !== 'web'}
       >
         {userLocation && (
           <Marker
