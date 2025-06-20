@@ -2,6 +2,7 @@ module.exports = {
   expo: {
     name: "TrailLink",
     slug: "traillink",
+    platforms: ["ios", "android"],
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
