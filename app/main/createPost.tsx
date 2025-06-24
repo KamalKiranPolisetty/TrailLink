@@ -7,7 +7,7 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
-import { useRouter, useFocusEffect } from "expo-router"; 
+import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { Colors } from "@/constants/Colors";
